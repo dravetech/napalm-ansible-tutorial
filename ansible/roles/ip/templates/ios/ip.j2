@@ -1,0 +1,13 @@
+{% for i in interfaces %}
+
+interface {{ i.name }}
+ description {{ i.description }};
+{% for ip in i.ips %}
+ ip address {{ ip|ipaddr("address") }} {{ ip|ipaddr("netmask") }} {{ "secondary" if loop.index0 else "" }}
+{% endfor %}
+ {{ "shutdown" if not i.enabled else "" }}
+ {{ "negotiation auto" if i.name.startswith("Gi") else "" }}
+!
+{% endfor %}
+!
+end

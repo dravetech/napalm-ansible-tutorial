@@ -1,0 +1,26 @@
+---
+- name: "Generate validation rules"
+  template:
+    src: "validate.j2"
+    dest: "{{ host_tmpdir }}/validate.yaml"
+  changed_when: no
+  check_mode: no
+- name: "Read validation rules, gather data and verify it against rules"
+  napalm_validate:
+    hostname: "{{ host }}"
+    username: "{{ user }}"
+    dev_os: "{{ os }}"
+    password: "{{ password }}"
+    optional_args:
+      port: "{{ port }}"
+    validation_file: "{{ host_tmpdir }}/validate.yaml"
+  register: validation
+- name: "Failed Compliance Report"
+  fail:
+    msg: "{{ validation.compliance_report|to_nice_json }}"
+  when: not validation.compliance_report.complies
+- name: "Compliance report"
+  debug:
+    msg: "Complies"
+  when: validation.compliance_report.complies
+  tags: [print_action]

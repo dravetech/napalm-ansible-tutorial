@@ -1,0 +1,17 @@
+---
+interfaces:
+  - name: "lo0"
+    description: "Loopback interface"
+    ips:
+     - "10.0.0.102/32"
+    enabled: true
+  - name: "ge-0/0/1"
+    description: "Link1"
+    ips:
+     - "192.168.1.102/24"
+    enabled: true
+  - name: "ge-0/0/2"
+    description: "Link2"
+    ips:
+     - "192.168.2.102/24"
+    enabled: true

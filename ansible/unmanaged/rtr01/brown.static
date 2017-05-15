@@ -1,0 +1,53 @@
+version 15.4
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no platform punt-keepalive disable-kernel-core
+platform console virtual
+!
+hostname rtr01
+!
+boot-start-marker
+boot-end-marker
+!
+enable secret 5 $1$nc08$bizeEFbgCBKjZP4nurNCd.
+enable password vagrant
+!
+aaa new-model
+!
+aaa authorization exec default local
+!
+aaa session-id common
+!
+subscriber templating
+!
+multilink bundle-name authenticated
+!
+license udi pid CSR1000V sn 972KC1PSEM6
+spanning-tree extend system-id
+!
+username vagrant privilege 15 password 0 vagrant
+!
+redundancy
+ mode none
+!
+interface GigabitEthernet1
+ ip address dhcp
+ negotiation auto
+ no mop enabled
+!
+virtual-service csr_mgmt
+!
+ip forward-protocol nd
+!
+no ip http server
+no ip http secure-server
+ip ssh version 2
+ip scp server enable
+!
+control-plane
+!
+line con 0
+ stopbits 1
+line vty 0 4
+ password vagrant
+!

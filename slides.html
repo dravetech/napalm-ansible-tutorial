@@ -1,0 +1,1069 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>NAPALM/Ansible by Example</title>
+
+		<link rel="stylesheet" href="reveal.js/css/reveal.css">
+		<link rel="stylesheet" href="reveal.js/css/theme/blood.css">
+		<link rel="stylesheet" href="css/custom.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="css/atom-one-dark.min.css">
+		<link rel="stylesheet" href="css/custom_highlight.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'reveal.js/css/print/pdf.css' : 'reveal.js/css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h1>NAPALM/Ansible <strong>by Example</strong></h1>
+				</section>
+
+				<section>
+					<h2>Agenda</h2>
+					<ul>
+						<li>Introduction to NAPALM</li>
+						<li>Hello World</li>
+						<li>NAPALM Modules</li>
+						<li>Configuration Management (merge)</li>
+						<li>Fully Automated Verification</li>
+						<li>From a Brown to a Shiny Green Field</li>
+						<li>Distributed <code>ping</code></li>
+					</ul>
+				</section>
+
+				<section> <!-- Introduction to napalm --!>
+
+					<section>
+						<h2>Introduction to <strong>napalm</strong></h2>
+						NAPALM is an API that abstracts vendors' APIs (ssh screen scraping, NETCONF, REST, RESTCONF...). NAPALM allows you to write code once and reuse it everywhere.
+					</section>
+
+					<section>
+						<h3>Configuration management</h3>
+						<ul>
+							<li>Merge Configuration</li>
+							<li>Replace Configuration</li>
+							<li>Compare Running/Candidate Configurations</li>
+							<li>Commit Configuration</li>
+							<li>Discard Configuration</li>
+							<li>Rollback Configuration</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3>Getters</h3>
+						<ul>
+							<li>get_facts</li>
+							<li>get_interfaces</li>
+							<li>get_interfaces_ip</li>
+							<li>get_lldp_neighbors</li>
+							<li>get_bgp_config</li>
+							<li>get_bgp_neighbors</li>
+							<li>Many, many others</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3></h3>
+						<div style="display:flex; position:relative; right:120px;">
+							<pre><code data-trim class="python">
+								>>> from napalm_base import get_network_driver
+								>>> import pprint
+								>>> pp = pprint.PrettyPrinter(indent=4)
+								>>>
+								>>> junos_driver =  get_network_driver('junos')
+								>>> eos_driver =  get_network_driver('eos')
+								>>>
+								>>> junos_config = {
+								...     'hostname': '127.0.0.1',
+								...     'username': 'vagrant',
+								...     'password': '',
+								...     'optional_args': {'port': 12203}
+								... }
+								>>>
+								>>> eos_config = {
+								...     'hostname': '127.0.0.1',
+								...     'username': 'vagrant',
+								...     'password': 'vagrant',
+								...     'optional_args': {'port': 12443}
+								... }
+								>>>
+							</code></pre>
+							<pre><code data-trim class="python">
+								>>> with junos_driver(**junos_config) as junos:
+								...     pp.pprint(junos.get_facts())
+								...
+								{   'fqdn': u'new-hostname',
+								    'hostname': u'new-hostname',
+								    'interface_list': ['ge-0/0/0', 'gr-0/0/0', 
+								                       'lt-0/0/0', 'mt-0/0/0', 'vlan'],
+								    'model': u'FIREFLY-PERIMETER',
+								    'os_version': u'12.1X47-D20.7',
+								    'serial_number': u'5b2b599a283b',
+								    'uptime': 1080,
+								    'vendor': u'Juniper'}
+								>>>
+								>>> with eos_driver(**eos_config) as eos:
+								...     pp.pprint(eos.get_facts())
+								...
+								{   'fqdn': u'a-new-hostname',
+									    'hostname': u'a-new-hostname',
+									    'interface_list': [u'Ethernet1', u'Ethernet2',
+									                       u'Management1'],
+									    'model': u'vEOS',
+									    'os_version': u'4.16.6M-3205780.4166M',
+									    'serial_number': u'',
+									    'uptime': 1217,
+									    'vendor': u'Arista'}
+							</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h3></h3>
+						<div style="display:flex; position:relative; right:70px;">
+							<pre><code data-trim class="python">
+								>>> from napalm_base import get_network_driver
+								>>> junos_driver =  get_network_driver('junos')
+								>>> eos_driver =  get_network_driver('eos')
+								>>>
+								>>> junos_conf = {
+								...     'hostname': '127.0.0.1',
+								...     'username': 'vagrant',
+								...     'password': '',
+								...     'optional_args': {'port': 12203}
+								... }
+								>>>
+								>>> eos_conf = {
+								...     'hostname': '127.0.0.1',
+								...     'username': 'vagrant',
+								...     'password': 'vagrant',
+								...     'optional_args': {'port': 12443}
+								... }
+								>>>
+								>>> def change_configuration(device, conf):
+								...     device.load_merge_candidate(config=conf)
+								...     print(device.compare_config())
+								...     device.commit_config()
+								...
+								>>>
+							</code></pre>
+							<pre><code data-trim class="python">
+								>>> with junos_driver(**junos_conf) as junos:
+								...     change_configuration(
+								...            junos,
+								...            "system {host-name rtr00;}"
+								...     )
+								...
+								[edit system]
+								-  host-name hostname;
+								+  host-name rtr00;
+								>>>
+								>>> with eos_driver(**eos_conf) as eos:
+								...     change_configuration(
+								...            eos,
+								...            'hostname rtr01'
+								...     )
+								...
+								@@ -8,7 +8,7 @@
+								 !
+								 transceiver qsfp default-mode 4x10G
+								 !
+								-hostname localhost
+								+hostname rtr01
+								 !
+								 spanning-tree mode mstp
+								 !
+								>>>
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Useful Links</h3>
+						<ul>
+							<li><a href="https://github.com/napalm-automation/napalm">Github Repo</a></li>
+							<li><a href="https://napalm.readthedocs.io/en/latest/">Documentation</a></li>
+							<li><a href="https://napalm.readthedocs.io/en/latest/support/index.html">Supported Network Operating Systems</a></li>
+							<li><a href="https://napalm.readthedocs.io/en/latest/support/index.html#getters-support-matrix">Getters</a></li>
+						</ul>
+
+					</section>
+
+				</section>
+
+				<section> <!-- Hello World --!>
+
+					<section>
+						<h2><strong>Hello</strong> world</h2>
+						<ol>
+							<li>Install necessary components</li>
+							<li>Configure ansible</li>
+							<li>Create and execute our first playbook</li>
+						</ol>
+					</section>
+
+					<section>
+						<h3>Installation</h3>
+						<pre style="width:715px"><code data-trim class="bash">
+							# Create python venv
+							virtualenv .venv
+
+							# Activate
+							. ./.venv/bin/activate
+
+							# Install ansible
+							pip install ansible
+
+							# Install napalm
+							pip install napalm
+
+							# Install ansible plugin
+							cd ansible
+							git clone git@github.com:napalm-automation/napalm-ansible.git
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Configuration</h3>
+							<pre>hosts<code data-trim class="toml">
+								[all]
+								rtr00 os=eos   host=127.0.0.1 user=vagrant password=vagrant port=12443
+								rtr01 os=ios   host=127.0.0.1 user=vagrant password=vagrant port=12202
+								rtr02 os=junos host=127.0.0.1 user=vagrant password="" port=12203
+
+								[all:vars]
+								ansible_python_interpreter="/usr/bin/env python" # Using python venv
+							</code></pre>
+							<pre>ansible.cfg<code data-trim class="toml">
+								[defaults]
+								inventory = hosts                  # Location of hosts file
+								library = napalm-ansible/library   # Location of napalm plugins
+								stdout_callback = selective        # stdout plugin (optional)
+							</code></pre>
+					</section>
+
+					<section>
+						<h3>Our first playbook</h3>
+							<pre>playbook_hello_world.yaml<code data-trim class="yaml">
+								---
+								- name: Get facts
+								  hosts: all
+								  connection: local                       # code is run locally
+								  gather_facts: no                        # don't gather facts
+								  tasks:
+								    - name: get facts from device
+								      napalm_get_facts:                   # NAPALM plugin
+								        hostname: "{{ host }}"            # start of connection parameters
+								        username: "{{ user }}"
+								        dev_os: "{{ os }}"
+								        password: "{{ password }}"
+								        optional_args:
+								          port: "{{ port }}"             # end of connection parameters
+								        filter: ['facts']                # which NAPALM getters to use
+								      register: napalm_facts             # store information here
+								    - name: Print gathered facts
+								      debug:
+								        msg: "{{ napalm_facts.ansible_facts|to_nice_json }}"
+								      tags: [print_action]
+							</code></pre>
+							<div class="fragment" data-fragment-index="8" style="position: relative; bottom: 500px; left:250px">Modules/playbooks are vendor agnostic!!!</div>
+					</section>
+
+					<section>
+						<h3>Running the playbook</h3>
+							<pre><code data-trim class="bash">
+							ansible-playbook playbook_hello_world.yaml
+							</code></pre>
+					</section>
+
+					<section>
+						<h3>Exercises</h3>
+						<ul>
+							<li>Retrieve information related to interfaces as well</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3>Summary</h3>
+						<ol>
+							<li>We installed and configured napalm and ansible</li>
+							<li>We wrote and ran our first playbook</li>
+							<li>We learnt that playbooks, modules and returned data are vendor agnostic</li>
+						<ol>
+					</section>
+
+				</section>
+
+				<section> <!-- NAPALM Modules --!>
+
+					<section>
+						<h2>NAPALM modules</h2>
+					</section>
+
+					<section>
+						<strong><code>napalm_get_facts</code></strong></br></br>
+						Retrieves information from devices using <a href="https://napalm.readthedocs.io/en/latest/support/index.html#getters-support-matrix">napalm getters</a>.
+					</section>
+
+					<section>
+						<strong><code>napalm_install_config</code></strong></br></br>
+						Can load configuration on a device and replace it (full configuration), merge it (a subset of the configuration) or just return a diff (when available).
+					</section>
+
+					<section>
+						<strong><code>napalm_validate</code></strong></br></br>
+						Validate config/state. Basically, use a <em>getter</em> to gather info from the devices and verify retrieved data using simple rules.
+					</section>
+
+					<section>
+						<strong><code>napalm_ping</code></strong></br></br>
+						Execute a ping and return results
+					</section>
+
+					<section>
+						<strong><code>napalm_parse_yang</code></strong> (beta)</br></br>
+						Retrieve state/configuration from a device (or backup file) and return a <code>YANG</code> model.
+					</section>
+
+					<section>
+						<strong><code>napalm_diff_yang</code></strong> (beta)</br></br>
+						Compare two objects of the same <code>YANG</code> model.
+					</section>
+
+					<section>
+						<strong><code>napalm_translate_yang</code></strong> (beta)</br></br>
+						Translates a <code>YANG</code> model to native configuration.
+					</section>
+
+				</section>
+
+				<section> <!-- Configuration Management (merge) --!>
+
+					<section>
+						<h2>Configuration management (merge)</h2>
+						<ol>
+							<li>Configure basic system's configuration</li>
+							<li>Configure interfaces and IPs</li>
+						</ol>
+					</section>
+
+					<section>
+						<h3>Workflow</h3>
+						<div style="display:flex;">
+							<ol>
+								<li style="color:#ff8080;" class="fragment" data-fragment-index="1">We create a temporary directory where</br>we will generate and store snippets of</br>configurations and diffs</li>
+								<li style="color:#80ff80;" class="fragment" data-fragment-index="2">Different roles will generate snippets</br>of configuration</li>
+								<li style="color:#e6e600;" class="fragment" data-fragment-index="3">We gather all the snippets and assemble</br>them into a single file.</li>
+								<li style="color:#3399ff;" class="fragment" data-fragment-index="4">We load the configuration into the device</br>and we commit it and/or download a diff</li>
+							</ol>
+							<div style="text-align:left; margin-left:20px">
+								<code style="color:#ff8080;" class="fragment" data-fragment-index="1">.compiled</code></br>
+								<code style="color:#ff8080;" class="fragment" data-fragment-index="1">├── rtr00</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="2">│   ├── base.conf</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="2">│   ├── ip.conf</code></br>
+								<code style="color:#e6e600;" class="fragment" data-fragment-index="3">│   ├── assembled.conf</code></br>
+								<code style="color:#3399ff;" class="fragment" data-fragment-index="4">│   └── diff</code></br>
+								<code style="color:#ff8080;" class="fragment" data-fragment-index="1">├── rtr01</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="2">│   ├── base.conf</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="2">│   ├── ip.conf</code></br>
+								<code style="color:#e6e600;" class="fragment" data-fragment-index="3">│   ├── assembled.conf</code></br>
+								<code style="color:#3399ff;" class="fragment" data-fragment-index="4">│   └── diff</code></br>
+								<code style="color:#ff8080;" class="fragment" data-fragment-index="1">└── rtr02</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="2">&nbsp;&nbsp;&nbsp;&nbsp;├── base.conf</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="2">&nbsp;&nbsp;&nbsp;&nbsp;├── ip.conf</code></br>
+								<code style="color:#e6e600;" class="fragment" data-fragment-index="3">&nbsp;&nbsp;&nbsp;&nbsp;├── assembled.conf</code></br>
+								<code style="color:#3399ff;" class="fragment" data-fragment-index="4">&nbsp;&nbsp;&nbsp;&nbsp;└── diff</code></br>
+							</div>
+						</div>
+					</section>
+
+					<section>
+						<h3>Data (I)</h3>
+						<div style="display:flex";>
+							<pre>host_vars/rtr00<code data-trim class="yaml">
+								---
+								interfaces:
+								  - name: "Loopback0"
+								    description: "Loopback interface"
+								    ips:
+								     - "10.0.0.100/32"
+								    enabled: true
+								  - name: "Ethernet1"
+								    description: "Link1"
+								    ips:
+								     - "192.168.1.100/24"
+								    enabled: true
+								  - name: "Ethernet2"
+								    description: "Link2"
+								    ips:
+								     - "192.168.2.100/24"
+								    enabled: true
+							</code></pre>
+							<pre>host_vars/rtr01<code data-trim class="yaml">
+								---
+								interfaces:
+								  - name: "Loopback0"
+								    description: "Loopback interface"
+								    ips:
+								     - "10.0.0.101/32"
+								    enabled: true
+								  - name: "GigabitEthernet2"
+								    description: "Link1"
+								    ips:
+								     - "192.168.1.101/24"
+								    enabled: true
+								  - name: "GigabitEthernet3"
+								    description: "Link2"
+								    ips:
+								     - "192.168.2.101/24"
+								    enabled: true
+							</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h3>Data (II)</h3>
+						<div style="display:flex";>
+							<pre>host_vars/rtr02<code data-trim class="yaml">
+								---
+								interfaces:
+								  - name: "lo0"
+								    description: "Loopback interface"
+								    ips:
+								     - "10.0.0.102/32"
+								    enabled: true
+								  - name: "ge-0/0/1"
+								    description: "Link1"
+								    ips:
+								     - "192.168.1.102/24"
+								    enabled: true
+								  - name: "ge-0/0/2"
+								    description: "Link2"
+								    ips:
+								     - "192.168.2.102/24"
+								    enabled: true
+							</code></pre>
+							<pre>group_vars/all<code data-trim class="yaml">
+							---
+							domain: acme.com
+							</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h3>Playbook (I)</h2>
+						<pre>playbook_config_management.yaml<code data-trim class="yaml">
+							---
+							- name: "Simple configuration"
+							  hosts: all
+							  connection: local
+							  gather_facts: no
+							  vars:
+							      conf_dir: "{{ playbook_dir }}/.compiled/"
+							  pre_tasks:
+							    - name: "Assign tmp folder to host"
+							      set_fact:
+							         host_tmpdir: "{{ conf_dir}}/{{ inventory_hostname}}"
+							      changed_when: no   # Don't report changes
+							      check_mode: no     # Always make changes
+							    - name: "Make sure there are no remains from a previous run"
+							      file:
+							        path: "{{ host_tmpdir }}"
+							        state: absent
+							      changed_when: no   # Don't report changes
+							      check_mode: no     # Always make changes
+							    - name: "Create folder to store configurations and diffs for/from the devices"
+							      file:
+							        path: "{{ host_tmpdir }}"
+							        state: directory
+							      changed_when: no   # Don't report changes
+							      check_mode: no     # Always make changes
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Playbook (II)</h2>
+						<pre>playbook_config_management.yaml (continuation)<code data-trim class="yaml">
+							- name: "Automated Configuration"
+							  hosts: all
+							  connection: local
+							  roles:
+							    - base
+							    - ip
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Playbook (III)</h2>
+						<pre>playbook_config_management.yaml (continuation)<code data-trim class="yaml">
+							  post_tasks:
+							    - name: "Assemble all the configuration bits"
+							      assemble:
+							          src: "{{ host_tmpdir }}/"
+							          dest: "{{ host_tmpdir }}/assembled.conf"
+							      changed_when: no   # Don't report changes
+							      check_mode: no     # Always make changes
+							    - name: "Load configuration into the device"
+							      napalm_install_config:
+							        hostname: "{{ host }}"
+							        username: "{{ user }}"
+							        dev_os: "{{ os }}"
+							        password: "{{ password }}"
+							        optional_args:
+							          port: "{{ port }}"
+							        config_file: "{{ host_tmpdir }}/assembled.conf"
+							        commit_changes: "{{ not ansible_check_mode }}"
+							        replace_config: false
+							        get_diffs: true
+							        diff_file: "{{ host_tmpdir }}/diff"
+							      tags: [print_action]
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Roles</h3>
+						<div style="display:flex";>
+							<pre>roles layout (ip)<code data-trim class="bash">
+								roles
+								└── ip
+								    ├── tasks
+								    │   └── main.yaml
+								    └── templates
+								        ├── eos
+								        │   └── ip.j2
+								        ├── ios
+								        │   └── ip.j2
+								        └── junos
+								            └── ip.j2
+							</code></pre>
+							<pre>roles/ip/tasks/main.yaml<code data-trim class="yaml">
+								---
+								- name: Interfaces/IP configuration
+								  template:
+								    src: "{{ os }}/ip.j2"
+								    dest: "{{ host_tmpdir }}/ip.conf"
+								  changed_when: no
+								  check_mode: no
+							</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h3>Templates</h3>
+						<div style="display:flex; position:relative; right:140px;">
+							<pre>roles/ip/templates/{ios,eos}/ip.j2<code data-trim class="jinja">
+								{% for i in interfaces %}
+								
+								interface {{ i.name }}
+								  description {{ i.description }};
+								  {{ 'no switchport' if not i.name.startswith("Lo") else "" }}
+								  {% for ip in i.ips %}
+								  ip address {{ ip }} {{ "secondary" if loop.index0 else "" }}
+								  {% endfor %}
+								  {{ "no" if i.enabled else "" }} shutdown
+								{% endfor %}
+							</code></pre>
+							<pre>roles/ip/templates/junos/ip.j2<code data-trim class="jinja">
+								{% for i in interfaces %}
+								
+								interfaces {
+								  {{ i.name }} {
+								    description "{{ i.description }}";
+								    unit 0 {
+								      family inet {
+								        {% for ip in i.ips %}
+								        address {{ ip }};
+								        {% endfor %}
+								      }
+								    }
+								    {{ "disable;" if not i.enabled else "" }}
+								  }
+								}
+								
+								{% endfor %}
+							</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h3>Deploying the configuration</h3>
+						<pre><code data-trim class="bash">
+							ansible-playbook playbook_config_management.yaml -C
+							ansible-playbook playbook_config_management.yaml
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Semi-automated verification (playbook)</h3>
+						<pre>playbook_semi_automated_verification.yaml<code data-trim class="yaml">
+							---
+							- name: Get facts
+							  hosts: all
+							  connection: local
+							  gather_facts: no
+							  tasks:
+							  - name: get facts from device
+							      napalm_get_facts:
+							        hostname: "{{ host }}"
+							        username: "{{ user }}"
+							        dev_os: "{{ os }}"
+							        password: "{{ password }}"
+							        optional_args:
+							          port: "{{ port }}"
+							        filter: 
+							          - 'facts'
+							          - 'interfaces'
+							          - 'interfaces_ip'
+							      register: napalm_facts
+							    - name: Facts
+							      debug:
+							        msg: "{{ napalm_facts.ansible_facts|to_nice_json }}"
+							      tags: [print_action]
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Semi-automated verification (command)</h3>
+						<pre><code data-trim class="bash">
+							ansible-playbook playbook_semi_automated_verification.yaml
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Exercises</h3>
+						Wait for the next module ;)
+					</section>
+
+					<section>
+						<h3>Summary</h3>
+						<ul>
+							<li>We learnt how to use NAPALM to start doing some simple configuration changes</li>
+							<li>We also leveraged NAPALM and Ansible to avoid having to connect to the CLI for simple manual verifications</li>
+						</ul>
+						</br></br>
+						<strong>We are yet to understand the risks and challenges of merging configuration!</strong>
+					</section>
+
+				</section>
+
+				<section> <!-- Fully Automated Verification --!>
+
+					<section>
+						<h2>Fully automated verification</h2>
+						Use <code>napalm_validate</code> module to automatically <a href="https://napalm.readthedocs.io/en/latest/validate/index.html">validate</a> changes after doing configuration deployment
+					</section>
+
+					<section>
+					<h3>Workflow</h3>
+						<ol>
+							<li>Deploy configuration as in the previous module</li>
+							<li>Generate validation rules off the same data that was used to generate configurations</li>
+							<li>Connect to the device, gather data and compare it against the validation rules</li>
+						</ol>
+					</section>
+
+					<section>
+						<h3>Validation playbook</h3>
+							<pre>includes/validate.yaml<code data-trim class="yaml">
+								---
+								- name: "Generate validation rules"
+								  template:
+								    src: "validate.j2"
+								    dest: "{{ host_tmpdir }}/validate.yaml"
+								  changed_when: no
+								  check_mode: no
+								- name: "Read validation rules, gather data and verify it against rules"
+								  napalm_validate:
+								    hostname: "{{ host }}"
+								    username: "{{ user }}"
+								    dev_os: "{{ os }}"
+								    password: "{{ password }}"
+								    optional_args:
+								      port: "{{ port }}"
+								    validation_file: "{{ host_tmpdir }}/validate.yaml"
+								  register: validation
+								- name: "Failed Compliance Report"
+								  fail:
+								    msg: "{{ validation.compliance_report|to_nice_json }}"
+								  when: not validation.compliance_report.complies
+								- name: "Compliance report"
+								  debug:
+								    msg: "Complies"
+								  when: validation.compliance_report.complies
+								  tags: [print_action]
+							</code></pre>
+					</section>
+
+					<section>
+						<h3>Validation Rules Template</h3>
+						<div style="display:flex; position:relative; right:80px">
+							<pre>includes/templates/validate.j2<code data-trim class="jinja">
+								---
+								- get_facts:
+								    hostname: {{ inventory_hostname }}
+								    fqdn: {{ inventory_hostname }}.{{ domain }}
+								- get_interfaces:
+								{% for i in interfaces %}
+								    {{ i.name }}:
+								        description: {{ i.description }}
+								        is_enabled: {{ i.enabled }}
+								- get_interfaces_ip:
+								{% for i in interfaces %}
+								    {{ i.name }}{{ ".0" if os == "junos" else "" }}:
+								      ipv4:
+								        _mode: strict
+								{% for ip in i.ips %}
+								        {{ ip.split("/")[0] }}:
+								          prefix_length: {{ ip.split("/")[1] }}
+								{% endfor %}
+								{% endfor %}
+								{% endfor %}
+							</code></pre>
+							<pre>host_vars/rtr00 (for reference)<code data-trim class="yaml">
+								---
+								interfaces:
+								  - name: "Loopback0"
+								    description: "Loopback interface"
+								    ips:
+								     - "10.0.0.100/32"
+								    enabled: true
+								  - name: "Ethernet1"
+								    description: "Link1"
+								    ips:
+								     - "192.168.1.100/24"
+								    enabled: true
+								  - name: "Ethernet2"
+								    description: "Link2"
+								    ips:
+								     - "192.168.2.100/24"
+								    enabled: true
+							</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h3>Generated Validation Rules</h3>
+						<div style="display:flex">
+							<pre>rtr00/validate.yaml<code data-trim class="yaml">
+								---
+								- get_facts:
+								    hostname: rtr00
+								    fqdn: rtr00.acme.com
+								- get_interfaces:
+								    Loopback0:
+								        description: Loopback interface
+								        is_enabled: True
+								    Ethernet1:
+								        description: Link1
+								        is_enabled: True
+								    Ethernet2:
+								        description: Link2
+								        is_enabled: True
+							</code></pre>
+							<pre>rtr00/validate.yaml (continuation)<code data-trim class="yaml">
+								- get_interfaces_ip:
+								    Loopback0:
+								      ipv4:
+								        _mode: strict
+								        10.0.0.100:
+								          prefix_length: 32
+								    Ethernet1:
+								      ipv4:
+								        _mode: strict
+								        192.168.1.100:
+								          prefix_length: 24
+								    Ethernet2:
+								      ipv4:
+								        _mode: strict
+								        192.168.2.100:
+								          prefix_length: 24
+							</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h3>Post-action hook</h3>
+						<pre>playbook_fully_automated_verification.yaml (post_tasks)<code data-trim class="yaml">
+								post_tasks:
+								  - name: Assemble all the configuration bits
+								    assemble:
+								      src: "{{ host_tmpdir }}/"
+								      dest: "{{ host_tmpdir }}/assembled.conf"
+								    check_mode: no
+								    changed_when: no
+								  - name: Load configuration into the device
+								    napalm_install_config:
+								      hostname: "{{ host }}"
+								      username: "{{ user }}"
+								      dev_os: "{{ os }}"
+								      password: "{{ password }}"
+								      optional_args:
+								        port: "{{ port }}"
+								      config_file: "{{ host_tmpdir }}/assembled.conf"
+								      commit_changes: "{{ not ansible_check_mode }}"
+								      replace_config: false
+								      get_diffs: true
+								      diff_file: "{{ host_tmpdir }}/diff"
+								    tags: [print_action]
+								  - include: includes/validate.yaml
+								    when: not ansible_check_mode
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Command</h3>
+						<pre><code data-trim class="bash">
+							ansible-playbook playbook_fully_automated_verification.yaml
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Exercises</h3>
+						<ul>
+							<li>Disable and enable interfaces</li>
+							<li>Add and remove an IP address on any device</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3>Summary</h3>
+						<ul>
+							<li>We built a system to automatically verify deployments</li>
+							<li>Thanks to the automatic validation we learnt some things didn't work as expected</li>
+							<li>Merging configuration is challenging due to the stateless nature of the system</li>
+						</ul>
+						</br></br>
+						<strong>Potential solutions to overcome our merge issues are to build an adhoc system that runs different playbooks based on events (congratz, you just built a CLI 2.0) or tell the device what you exactly want and get rid of the rest</strong>
+
+					</section>
+
+				</section>
+
+				<section> <!-- From a brown to a shiny green field --!>
+
+					<section>
+						<h2>From a brown to a shiny green field</h2>
+						Set the foundation to fully manage our device with ansible allowing us to do a <strong>replace</strong> rather than a merge.
+					</section>
+
+					<section>
+						<h3>Workflow</h3>
+						<div style="display:flex;">
+							<ul>
+								<li style="color:#80ff80;" class="fragment" data-fragment-index="1">Each device will have a dedicated "unmanaged"</br>configuration file the will contain "static"</br>configuration</li>
+								<li style="color:#ff8080;" class="fragment" data-fragment-index="2">A brownfield role will be responsible of</br>adding that snippet of configuration</br>to the device's temporary folder</li>
+								<li style="color:#e6e600;" class="fragment" data-fragment-index="3">Existing playbook will add this role and</br>instruct napalm to replace configuration</li>
+								<li style="color:#3399ff;" class="fragment" data-fragment-index="4">Device will ensure only desired configuration</br>is present and remove the rest</li>
+							</ul>
+							<div style="text-align:left; margin-left:20px">
+								<code class="fragment" data-fragment-index="2">├── roles</code></br>
+								<code class="fragment" data-fragment-index="2">│   ├── base</code></br>
+								<code class="fragment" data-fragment-index="2">│   ├── ip</code></br>
+								<code style="color:#ff8080;" class="fragment" data-fragment-index="2">│   └── brownfield</code></br>
+								<code style="color:#ff8080;" class="fragment" data-fragment-index="2">│       └── tasks</code></br>
+								<code style="color:#ff8080;" class="fragment" data-fragment-index="2">│           └── main.yaml</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="1">└── unmanaged</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="1">&nbsp;&nbsp;&nbsp;    ├── rtr00</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="1">&nbsp;&nbsp;&nbsp;    │   └── brown.static</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="1">&nbsp;&nbsp;&nbsp;    ├── rtr01</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="1">&nbsp;&nbsp;&nbsp;    │   └── brown.static</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="1">&nbsp;&nbsp;&nbsp;    └── rtr02</code></br>
+								<code style="color:#80ff80;" class="fragment" data-fragment-index="1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        └── brown.static</code></br>
+							</div>
+						</div>
+					</section>
+
+					<section>
+						<h3>Unmanaged configuration</h3>
+						<pre>unmanaged/rtr00/brown.static<code data-trim>
+							event-handler dhclient
+							 trigger on-boot
+							 action bash sudo /mnt/flash/initialize_ma1.sh
+							!
+							transceiver qsfp default-mode 4x10G
+							!
+							spanning-tree mode mstp
+							!
+							aaa authorization exec default local
+							!
+							aaa root secret sha512 $6$tIAmhTRMpbM5b7hH$MhTVW04xJbdXH871BYyT4WAFnV5q.cxmi2NWK8DhIKt60u45eDDrgeZXALsTXCTTf/BE4J2rMyGD45JyR5PU7.
+							!
+							username admin privilege 15 role network-admin secret sha512 $6$8qFGjMSK.H2fIrtr$VUQDDIqab.aMssxbXedjKpSnID6dfWBBItmDvjc3dzatRDiRkui2qMl27XWfo9hiUjeTRYokuuexw6iJOdWpZ/
+							username vagrant privilege 15 role network-admin secret sha512 $6$u9Umd2O3S/Egu473$IHIs3nNahQ3elB4PJwPDPo/HDsRmg2WMpE3D9dMSOCekpsCOLlauNU2zwGRuCY7pe4YW3xfA4A8JpRZXK8rVN1
+							!
+							interface Management1
+							 ip address 10.0.2.15/24
+							!
+							no ip routing
+							!
+							management api http-commands
+							 no shutdown
+						</code></pre>
+						<small>Note: Long term objective would be to make sure this file is empty although it can be used for overrides</small>
+					</section>
+
+					<section>
+						<h3>Role</h3>
+						<pre>roles/brownfield/tasks/main.yaml<code data-trim class="yaml">
+							---
+							- name: Configuration not yet automated
+							  copy:
+							    src: "unmanaged/{{ inventory_hostname }}/brown.static"
+							    dest: "{{ host_tmpdir }}/z_brown.conf"
+							  changed_when: no
+							  check_mode: no
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Playbook</h3>
+						<pre>playbook_config_management_replace.yaml<code data-trim class="yaml">
+							- name: Automated Configuration
+							  hosts: all
+							  connection: local
+							  roles:
+							    - base
+							    - ip
+
+							- name: Unamanged Configuration
+							  hosts: all
+							  connection: local
+							  roles:
+							    - brownfield
+						</code></pre>
+						<small>Note: Rest of the playbook is identical to <code>playbook_config_management.yaml</code></small>
+					</section>
+
+					<section>
+						<h3>Running the Playbook</h3>
+						<pre><code data-trim>
+							ansible-playbook playbook_config_management_replace.yaml -C
+							ansible-playbook playbook_config_management_replace.yaml
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Exercises</h3>
+						<ul>
+							<li>Disable/Enable an interface on each device</li>
+							<li>Add/Remove an IP on any device</li>
+							<li>Add a manual change to the device via its CLI</li>
+							<li>Add a manual change to the device via <code>brown.static</code></li>
+						</ul>
+					</section>
+
+					<section>
+						<h3>Summary</h3>
+						<ul>
+							<li>We built a system that allows us to easily manage the entire configuration</li>
+							<li>Using the "brownfield" role/technique has two advantages:
+								<ol>
+									<li>Forces us to track manual changes via the same system as the parts that are automated</li>
+									<li>Allows us to keep our system lean and stateless</li>
+								</ol>
+							</li>
+							<li>By tracking the "brownfield" role we can easily check and work on automating all the bits not yet automated</li>
+							<li>Your compliance fellows will love it</li>
+						</ul>
+					</section>
+
+				</section>
+
+				<section> <!-- Distributed ping --!>
+
+						<section>
+							<h3>Distributed ping</h3>
+							Automate/Simplify operations
+						</section>
+
+						<section>
+							<h3>Playbook</h3>
+							<pre>playbook_ping.html<code data-trim class="yaml">
+								---
+								- name: Distributed ping
+								  hosts: all
+								  connection: local
+								  gather_facts: no
+								  tasks:
+								    - napalm_ping:
+								        hostname: "{{ host }}"
+								        username: "{{ user }}"
+								        dev_os: "{{ os }}"
+								        password: "{{ password }}"
+								        optional_args:
+								          port: "{{ port }}"
+								        destination: "{{ d }}"
+								      register: ping
+								    - name: "Ping results towards {{ d }}"
+								      debug:
+								        msg: "{{ ping|to_nice_json }}"
+								      tags: [print_action]
+							</code></pre>
+						</section>
+
+					<section>
+						<h3>Running the Playbook</h3>
+						<pre><code data-trim>
+							ansible-playbook playbook_ping.yaml -e d=8.8.8.8
+						</code></pre>
+					</section>
+
+					<section>
+						<h3>Sumary</h3>
+						Automation is more than configuration management!
+					</section>
+
+				</section>
+
+				<section>
+					<h2>Recap</h2>
+					<ul>
+						<li>We learnt how to install ansible, napalm and how to integrate them</li>
+						<li>We learnt about napalm modules</li>
+						<li>We built a simple configuration management system that merged configuration into an existing device. It wasn't flawless but it was better than nothing</li>
+						<li>We also built a simple playbook to allow operators to visually inspect multiple devices without having to connect to them</li>
+						<li>We added a post action to our playbook to verify deployments. This allowed us to verify that changed were applied as expected</li>
+						<li>We added a "brownfield" role to track "manual" changes that allowed us to tell our devices which exact configuration we wanted instead of telling them "what commands to run"</li>
+						<li>We built a distributed ping with ansible and napalm for the sole purpose of showing that <code>automation != configuration_management</code></li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Happy automation!</h2>
+					<img src="automation.gif" alt="automation"/>
+				</section>
+
+			</div>
+		</div>
+
+		<script src="reveal.js/lib/js/head.min.js"></script>
+		<script src="reveal.js/js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				history: true,
+				dependencies: [
+					{ src: 'reveal.js/plugin/markdown/marked.js' },
+					{ src: 'reveal.js/plugin/markdown/markdown.js' },
+					{ src: 'reveal.js/plugin/notes/notes.js', async: true },
+					{ src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>

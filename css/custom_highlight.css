@@ -1,0 +1,20 @@
+.hljs {
+	  background: #222222;
+}
+
+.hljs-attr {
+	color: #66d9ef;
+}
+
+.hljs-literal, .hljs-number {
+	color: #ae81ff;
+}
+
+.hljs-string {
+	color: #AFAE89;
+}
+
+.hljs-keyword {
+	color: #CA2B41;
+}
+

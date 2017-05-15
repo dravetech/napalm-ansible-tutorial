@@ -1,0 +1,22 @@
+event-handler dhclient
+   trigger on-boot
+   action bash sudo /mnt/flash/initialize_ma1.sh
+!
+transceiver qsfp default-mode 4x10G
+!
+spanning-tree mode mstp
+!
+aaa authorization exec default local
+!
+aaa root secret sha512 $6$tIAmhTRMpbM5b7hH$MhTVW04xJbdXH871BYyT4WAFnV5q.cxmi2NWK8DhIKt60u45eDDrgeZXALsTXCTTf/BE4J2rMyGD45JyR5PU7.
+!
+username admin privilege 15 role network-admin secret sha512 $6$8qFGjMSK.H2fIrtr$VUQDDIqab.aMssxbXedjKpSnID6dfWBBItmDvjc3dzatRDiRkui2qMl27XWfo9hiUjeTRYokuuexw6iJOdWpZ/
+username vagrant privilege 15 role network-admin secret sha512 $6$u9Umd2O3S/Egu473$IHIs3nNahQ3elB4PJwPDPo/HDsRmg2WMpE3D9dMSOCekpsCOLlauNU2zwGRuCY7pe4YW3xfA4A8JpRZXK8rVN1
+!
+interface Management1
+   ip address 10.0.2.15/24
+!
+no ip routing
+!
+management api http-commands
+   no shutdown

@@ -99,3 +99,16 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# vim temporary files
+*.swp
+
+# ctags
+tags
+
+# vagrant
+.vagrant
+
+# ansible
+*.retry
+.compiled

@@ -1,0 +1,17 @@
+---
+interfaces:
+  - name: "Loopback0"
+    description: "Loopback interface"
+    ips:
+     - "10.0.0.100/32"
+    enabled: true
+  - name: "Ethernet1"
+    description: "Link1"
+    ips:
+     - "192.168.1.100/24"
+    enabled: true
+  - name: "Ethernet2"
+    description: "Link2"
+    ips:
+     - "192.168.2.100/24"
+    enabled: true

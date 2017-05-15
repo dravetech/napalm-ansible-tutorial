@@ -1,0 +1,20 @@
+---
+- get_facts:
+    hostname: {{ inventory_hostname }}
+    fqdn: {{ inventory_hostname }}.{{ domain }}
+- get_interfaces_ip:
+{% for i in interfaces %}
+    {{ i.name }}{{ ".0" if os == "junos" else "" }}:
+      ipv4:
+        _mode: strict
+{% for ip in i.ips %}
+        {{ ip.split("/")[0] }}:
+          prefix_length: {{ ip.split("/")[1] }}
+{% endfor %}
+{% endfor %}
+- get_interfaces:
+{% for i in interfaces %}
+    {{ i.name }}:
+        description: {{ i.description }}
+        is_enabled: {{ i.enabled }}
+{% endfor %}

@@ -1,0 +1,7 @@
+---
+- name: Base configuration
+  template:
+    src: "{{ os }}/base.j2"
+    dest: "{{ host_tmpdir }}/base.conf"
+  changed_when: no
+  check_mode: no

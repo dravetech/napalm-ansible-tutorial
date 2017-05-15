@@ -1,0 +1,7 @@
+---
+- name: Configuration not yet automated
+  copy:
+    src: "unmanaged/{{ inventory_hostname }}/brown.static"
+    dest: "{{ host_tmpdir }}/0_brown.conf"
+  changed_when: no
+  check_mode: no

@@ -1,0 +1,17 @@
+{% for i in interfaces %}
+
+interfaces {
+    {{ i.name }} {
+        description "{{ i.description }}";
+        unit 0 {
+            family inet {
+                {% for ip in i.ips %}
+                address {{ ip }};
+                {% endfor %}
+            }
+        }
+        {{ "disable;" if not i.enabled else "" }}
+    }
+}
+
+{% endfor %}

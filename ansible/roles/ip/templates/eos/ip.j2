@@ -1,0 +1,10 @@
+{% for i in interfaces %}
+
+interface {{ i.name }}
+  description {{ i.description }};
+  {{ 'no switchport' if not i.name.startswith("Lo") else "" }}
+  {% for ip in i.ips %}
+  ip address {{ ip }} {{ "secondary" if loop.index0 else "" }}
+  {% endfor %}
+  {{ "no" if i.enabled else "" }} shutdown
+{% endfor %}

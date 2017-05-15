@@ -1,0 +1,19 @@
+---
+- name: Distributed ping
+  hosts: all
+  connection: local
+  gather_facts: no
+  tasks:
+    - napalm_ping:
+        hostname: "{{ host }}"
+        username: "{{ user }}"
+        dev_os: "{{ os }}"
+        password: "{{ password }}"
+        optional_args:
+          port: "{{ port }}"
+        destination: "{{ d }}"
+      register: ping
+    - name: "Ping results towards {{ d }}"
+      debug:
+        msg: "{{ ping|to_nice_json }}"
+      tags: [print_action]

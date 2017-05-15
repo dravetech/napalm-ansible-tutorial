@@ -1,0 +1,67 @@
+version 12.1X47-D20.7;
+system {
+    root-authentication {
+        encrypted-password "$1$5MhDFyrI$NBBMndW1POqbN.0QEA4z0."; ## SECRET-DATA
+        ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD1OI4UF7G58NyPpdRw0bOUzzDnbRfP70MLL8gpv6XemTdlj6MQG6pTzowmwjdlvyhs7DRI1teGPxribclyGcqNrxelCoRS1bEwiopkRrnsl+WjXaEbubmWcFJjiillXpzdtoluI16M+qfeIWuMrihW+vCEkYm7NafJmAYt4pGiAVILUhm7pBvKeEqrvEOAN9gTOzEIEOwS9bmXyuA1vZmh4Rx1Lz8FcQbiNFGvgtX1ShrEwzniC3s3fW1C0jqmoQgMfIkudEI4EqfxhbBcrZE+2C2gdlogl0ZAVrFbf71gvQFXABNML+9ef/WQi6I8A9VJwzPrgnj8RDGl5bAVrQjN vagrant"; ## SECRET-DATA
+    }
+    login {
+        user vagrant {
+            uid 2000;
+            class super-user;
+            authentication {
+                ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"; ## SECRET-DATA
+            }
+        }
+    }
+    services {
+        ssh {
+            root-login allow;
+        }
+        netconf {
+            ssh;
+        }
+        web-management {
+            http {
+                interface ge-0/0/0.0;
+            }
+        }
+    }
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any any;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+    license {
+        autoupdate {
+            url https://ae1.juniper.net/junos/key_retrieval;
+        }
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                dhcp;
+            }
+        }
+    }
+}
+security {
+    forwarding-options {
+        family {
+            inet6 {
+                mode packet-based;
+            }
+            mpls {
+                mode packet-based;
+            }
+        }
+    }
+}

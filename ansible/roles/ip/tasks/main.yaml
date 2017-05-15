@@ -1,0 +1,7 @@
+---
+- name: IP configuration
+  template:
+    src: "{{ os }}/ip.j2"
+    dest: "{{ host_tmpdir }}/ip.conf"
+  changed_when: no
+  check_mode: no

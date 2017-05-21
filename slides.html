@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>NAPALM/Ansible by Example</title>
+		<title>NAPALM/Ansible tutorial</title>
 
 		<link rel="stylesheet" href="reveal.js/css/reveal.css">
 		<link rel="stylesheet" href="reveal.js/css/theme/blood.css">
@@ -27,41 +27,46 @@
 		<div class="reveal">
 			<div class="slides">
 				<section>
-					<h1>NAPALM/Ansible <strong>by Example</strong></h1>
+					<h1>NAPALM/Ansible <strong>tutorial</strong></h1>
+					dbarrosop@dravetech.com</br></br>
+					<a href="https://github.com/dravetech/napalm-ansible-tutorial">https://github.com/dravetech/napalm-ansible-tutorial</a>
 				</section>
 
 				<section>
-					<img style="width: 250px; position: relative; left: 90px; bottom: 10px;" src="unicorn.png" alt="Unicorn Avatar" align="left">
-					<ul>
-						<li><strong>Network Systems Engineer</strong> at <span style="color: #E52F34;">Fastly</span></li>
-						<li>Previously:
-							<ul>
-								<li><strong>Network Engineer</strong> at <span style="color: #2FD666;">Spotify</span></li>
-								<li><strong>Network Engineer</strong> at <span style="color: #26367B;">NTT</span></li>
-								<li><strong>Network &amp; Systems Engineer</strong> at <span style="color: #0E62A7;">Atlas IT</span></li>
-							</ul>
-						</li>
-						<li>Creator of:
-							<ul>
-								<li><a href='https://github.com/napalm-automation/napalm'>N.A.P.A.L.M.</a></li>
-								<li><a href='https://github.com/dbarrosop/sir'>SDN Internet Router</a></li>
-							</ul>
-						</li>
-					</ul>
-					<small style="position: relative; right: 390px; top: 20px;">Twitter | Linkedin | Github</br><strong>@dbarrosop</strong></small>
-				</section>
 
-				<section>
-					<h2>Agenda</h2>
-					<ul>
-						<li>Introduction to NAPALM</li>
-						<li>Hello World</li>
-						<li>NAPALM Modules</li>
-						<li>Configuration Management (merge)</li>
-						<li>Fully Automated Verification</li>
-						<li>From a Brown to a Shiny Green Field</li>
-						<li>Distributed <code>ping</code></li>
-					</ul>
+					<section>
+						<img style="width: 250px; position: relative; left: 90px; bottom: 10px;" src="unicorn.png" alt="Unicorn Avatar" align="left">
+						<ul>
+							<li><strong>Network Systems Engineer</strong> at <span style="color: #E52F34;">Fastly</span></li>
+							<li>Previously:
+								<ul>
+									<li><strong>Network Engineer</strong> at <span style="color: #2FD666;">Spotify</span></li>
+									<li><strong>Network Engineer</strong> at <span style="color: #26367B;">NTT</span></li>
+									<li><strong>Network &amp; Systems Engineer</strong> at <span style="color: #0E62A7;">Atlas IT</span></li>
+								</ul>
+							</li>
+							<li>Creator of:
+								<ul>
+									<li><a href='https://github.com/napalm-automation/napalm'>N.A.P.A.L.M.</a></li>
+									<li><a href='https://github.com/dbarrosop/sir'>SDN Internet Router</a></li>
+								</ul>
+							</li>
+						</ul>
+						<small style="position: relative; right: 390px; top: 20px;">Twitter | Linkedin | Github</br><strong>@dbarrosop</strong></small>
+					</section>
+
+					<section>
+						<h2>Agenda</h2>
+						<ul>
+							<li>Introduction to NAPALM</li>
+							<li>Hello World</li>
+							<li>NAPALM Modules</li>
+							<li>Configuration Management (merge)</li>
+							<li>Fully Automated Verification</li>
+							<li>From a Brown to a Shiny Green Field</li>
+							<li>Distributed <code>ping</code></li>
+						</ul>
+					</section>
 				</section>
 
 				<section> <!-- Introduction to napalm --!>
@@ -98,7 +103,7 @@
 
 					<section>
 						<h3></h3>
-						<div style="display:flex; position:relative; right:120px;">
+						<div style="display:flex;">
 							<pre><code data-trim class="python">
 								>>> from napalm_base import get_network_driver
 								>>> import pprint
@@ -154,7 +159,7 @@
 
 					<section>
 						<h3></h3>
-						<div style="display:flex; position:relative; right:70px;">
+						<div style="display:flex;">
 							<pre><code data-trim class="python">
 								>>> from napalm_base import get_network_driver
 								>>> junos_driver =  get_network_driver('junos')
@@ -237,7 +242,7 @@
 
 					<section>
 						<h3>Installation</h3>
-						<pre style="width:715px"><code data-trim class="bash">
+						<pre style="width:535px"><code data-trim class="bash">
 							# Create python venv
 							virtualenv .venv
 
@@ -258,7 +263,7 @@
 
 					<section>
 						<h3>Configuration</h3>
-							<pre>hosts<code data-trim class="toml">
+							<pre style="width:620px">hosts<code data-trim class="toml">
 								[all]
 								rtr00 os=eos   host=127.0.0.1 user=vagrant password=vagrant port=12443
 								rtr01 os=ios   host=127.0.0.1 user=vagrant password=vagrant port=12202
@@ -267,7 +272,7 @@
 								[all:vars]
 								ansible_python_interpreter="/usr/bin/env python" # Using python venv
 							</code></pre>
-							<pre>ansible.cfg<code data-trim class="toml">
+							<pre style="width:620px">ansible.cfg<code data-trim class="toml">
 								[defaults]
 								inventory = hosts                  # Location of hosts file
 								library = napalm-ansible/library   # Location of napalm plugins
@@ -277,7 +282,7 @@
 
 					<section>
 						<h3>Our first playbook</h3>
-							<pre>playbook_hello_world.yaml<code data-trim class="yaml">
+							<pre style="width:650px">playbook_hello_world.yaml<code data-trim class="yaml">
 								---
 								- name: Get facts
 								  hosts: all
@@ -299,12 +304,12 @@
 								        msg: "{{ napalm_facts.ansible_facts|to_nice_json }}"
 								      tags: [print_action]
 							</code></pre>
-							<div class="fragment" data-fragment-index="8" style="position: relative; bottom: 500px; left:250px">Modules/playbooks are vendor agnostic!!!</div>
+							<div class="fragment">Modules/playbooks are vendor agnostic!!!</div>
 					</section>
 
 					<section>
 						<h3>Running the playbook</h3>
-							<pre><code data-trim class="bash">
+							<pre style="width:370px"><code data-trim class="bash">
 							ansible-playbook playbook_hello_world.yaml
 							</code></pre>
 					</section>
@@ -411,7 +416,7 @@
 					</section>
 
 					<section>
-						<h3>Data (I)</h3>
+						<h3>Data</h3>
 						<div style="display:flex";>
 							<pre>host_vars/rtr00<code data-trim class="yaml">
 								---
@@ -451,12 +456,6 @@
 								     - "192.168.2.101/24"
 								    enabled: true
 							</code></pre>
-						</div>
-					</section>
-
-					<section>
-						<h3>Data (II)</h3>
-						<div style="display:flex";>
 							<pre>host_vars/rtr02<code data-trim class="yaml">
 								---
 								interfaces:
@@ -476,16 +475,16 @@
 								     - "192.168.2.102/24"
 								    enabled: true
 							</code></pre>
-							<pre>group_vars/all<code data-trim class="yaml">
-							---
-							domain: acme.com
-							</code></pre>
 						</div>
+						<pre>group_vars/all<code data-trim class="yaml">
+						---
+						domain: acme.com
+						</code></pre>
 					</section>
 
 					<section>
 						<h3>Playbook (I)</h2>
-						<pre>playbook_config_management.yaml<code data-trim class="yaml">
+						<pre style="width:720px">playbook_config_management.yaml<code data-trim class="yaml">
 							---
 							- name: "Simple configuration"
 							  hosts: all
@@ -516,7 +515,7 @@
 
 					<section>
 						<h3>Playbook (II)</h2>
-						<pre>playbook_config_management.yaml (continuation)<code data-trim class="yaml">
+						<pre style="width:420px">playbook_config_management.yaml (continuation)<code data-trim class="yaml">
 							- name: "Automated Configuration"
 							  hosts: all
 							  connection: local
@@ -528,7 +527,7 @@
 
 					<section>
 						<h3>Playbook (III)</h2>
-						<pre>playbook_config_management.yaml (continuation)<code data-trim class="yaml">
+						<pre style="width:520px">playbook_config_management.yaml (continuation)<code data-trim class="yaml">
 							  post_tasks:
 							    - name: "Assemble all the configuration bits"
 							      assemble:
@@ -555,7 +554,7 @@
 
 					<section>
 						<h3>Roles</h3>
-						<div style="display:flex";>
+						<div style="display:flex;";>
 							<pre>roles layout (ip)<code data-trim class="bash">
 								roles
 								└── ip
@@ -583,7 +582,7 @@
 
 					<section>
 						<h3>Templates</h3>
-						<div style="display:flex; position:relative; right:140px;">
+						<div style="display:flex;">
 							<pre>roles/ip/templates/{ios,eos}/ip.j2<code data-trim class="jinja">
 								{% for i in interfaces %}
 								
@@ -620,7 +619,7 @@
 
 					<section>
 						<h3>Deploying the configuration</h3>
-						<pre><code data-trim class="bash">
+						<pre style="width:450px"><code data-trim class="bash">
 							ansible-playbook playbook_config_management.yaml -C
 							ansible-playbook playbook_config_management.yaml
 						</code></pre>
@@ -628,7 +627,7 @@
 
 					<section>
 						<h3>Semi-automated verification (playbook)</h3>
-						<pre>playbook_semi_automated_verification.yaml<code data-trim class="yaml">
+						<pre style="width:530px">playbook_semi_automated_verification.yaml<code data-trim class="yaml">
 							---
 							- name: Get facts
 							  hosts: all
@@ -657,7 +656,7 @@
 
 					<section>
 						<h3>Semi-automated verification (command)</h3>
-						<pre><code data-trim class="bash">
+						<pre style="width:510px"><code data-trim class="bash">
 							ansible-playbook playbook_semi_automated_verification.yaml
 						</code></pre>
 					</section>
@@ -697,7 +696,7 @@
 
 					<section>
 						<h3>Validation playbook</h3>
-							<pre>includes/validate.yaml<code data-trim class="yaml">
+							<pre style="width:640px">includes/validate.yaml<code data-trim class="yaml">
 								---
 								- name: "Generate validation rules"
 								  template:
@@ -729,7 +728,7 @@
 
 					<section>
 						<h3>Validation Rules Template</h3>
-						<div style="display:flex; position:relative; right:80px">
+						<div style="display:flex;">
 							<pre>includes/templates/validate.j2<code data-trim class="jinja">
 								---
 								- get_facts:
@@ -816,7 +815,7 @@
 
 					<section>
 						<h3>Post-action hook</h3>
-						<pre>playbook_fully_automated_verification.yaml (post_tasks)<code data-trim class="yaml">
+						<pre style="width:500px">playbook_fully_automated_verification.yaml (post_tasks)<code data-trim class="yaml">
 								post_tasks:
 								  - name: Assemble all the configuration bits
 								    assemble:
@@ -845,7 +844,7 @@
 
 					<section>
 						<h3>Command</h3>
-						<pre><code data-trim class="bash">
+						<pre style="width:550px"><code data-trim class="bash">
 							ansible-playbook playbook_fully_automated_verification.yaml
 						</code></pre>
 					</section>
@@ -937,7 +936,7 @@
 
 					<section>
 						<h3>Role</h3>
-						<pre>roles/brownfield/tasks/main.yaml<code data-trim class="yaml">
+						<pre style="width:510px">roles/brownfield/tasks/main.yaml<code data-trim class="yaml">
 							---
 							- name: Configuration not yet automated
 							  copy:
@@ -950,7 +949,7 @@
 
 					<section>
 						<h3>Playbook</h3>
-						<pre>playbook_config_management_replace.yaml<code data-trim class="yaml">
+						<pre style="width:400px">playbook_config_management_replace.yaml<code data-trim class="yaml">
 							- name: Automated Configuration
 							  hosts: all
 							  connection: local
@@ -969,7 +968,7 @@
 
 					<section>
 						<h3>Running the Playbook</h3>
-						<pre><code data-trim>
+						<pre style="width:520px"><code data-trim>
 							ansible-playbook playbook_config_management_replace.yaml -C
 							ansible-playbook playbook_config_management_replace.yaml
 						</code></pre>
@@ -1011,7 +1010,7 @@
 
 						<section>
 							<h3>Playbook</h3>
-							<pre>playbook_ping.html<code data-trim class="yaml">
+							<pre style="width:400px">playbook_ping.html<code data-trim class="yaml">
 								---
 								- name: Distributed ping
 								  hosts: all
@@ -1036,7 +1035,7 @@
 
 					<section>
 						<h3>Running the Playbook</h3>
-						<pre><code data-trim>
+						<pre style="width:420px"><code data-trim>
 							ansible-playbook playbook_ping.yaml -e d=8.8.8.8
 						</code></pre>
 					</section>
@@ -1049,16 +1048,18 @@
 				</section>
 
 				<section>
-					<h2>Recap</h2>
-					<ul>
-						<li>We learnt how to install ansible, napalm and how to integrate them</li>
-						<li>We learnt about napalm modules</li>
-						<li>We built a simple configuration management system that merged configuration into an existing device. It wasn't flawless but it was better than nothing</li>
-						<li>We also built a simple playbook to allow operators to visually inspect multiple devices without having to connect to them</li>
-						<li>We added a post action to our playbook to verify deployments. This allowed us to verify that changed were applied as expected</li>
-						<li>We added a "brownfield" role to track "manual" changes that allowed us to tell our devices which exact configuration we wanted instead of telling them "what commands to run"</li>
-						<li>We built a distributed ping with ansible and napalm for the sole purpose of showing that <code>automation != configuration_management</code></li>
-					</ul>
+					<section>
+						<h2>Recap</h2>
+						<ul>
+							<li>We learnt how to install ansible, napalm and how to integrate them</li>
+							<li>We learnt about napalm modules</li>
+							<li>We built a simple configuration management system that merged configuration into an existing device. It wasn't flawless but it was better than nothing</li>
+							<li>We also built a simple playbook to allow operators to visually inspect multiple devices without having to connect to them</li>
+							<li>We added a post action to our playbook to verify deployments. This allowed us to verify that changes were applied as expected</li>
+							<li>We added a "brownfield" role to track "manual" changes that allowed us to tell our devices which exact configuration we wanted instead of telling them "what commands to run"</li>
+							<li>We built a distributed ping with ansible and napalm for the sole purpose of showing that <code>automation != configuration_management</code></li>
+						</ul>
+					</section>
 				</section>
 
 				<section>

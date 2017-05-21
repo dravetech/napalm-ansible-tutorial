@@ -45,7 +45,7 @@
 
 .reveal pre {
 	box-shadow: 0px 0px 0px;
-	font-size: 0.8em;
+	font-size: 0.6em;
 	color: #f92a72;
 }
 
@@ -75,6 +75,5 @@ ul li:before {
 }
 
 ul ul li:before {
-    content: "-"; /* Insert content that looks like bullets */  
+    content: "-"; /* Insert content that looks like bullets */
 }
-
